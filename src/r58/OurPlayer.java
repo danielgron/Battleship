@@ -162,10 +162,12 @@ public class OurPlayer implements BattleshipsPlayer {
     @Override
     public Position getFireCoordinates(Fleet enemyShips) {
         numOfEnemyShips = enemyShips.getNumberOfShips();
+        
         shipsLeftBeforeShot.clear();
         for (Ship enemyShip : enemyShips) {
             shipsLeftBeforeShot.add(enemyShip);
         }
+        s.setEnemyRemaining(shipsLeftBeforeShot);
         s.setOP(this);
         
         Position shot = null;
@@ -261,7 +263,7 @@ public class OurPlayer implements BattleshipsPlayer {
 
         //Do nothing
     }
-
+    
     /**
      * Called in the beginning of each match to inform about the number of
      * rounds being played.
@@ -287,6 +289,7 @@ public class OurPlayer implements BattleshipsPlayer {
         s.fillGridList();
         s.clearHits();
         s.resetShotMap();
+        
         hunting=false;
 
         //Do nothing

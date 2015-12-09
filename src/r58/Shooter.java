@@ -157,9 +157,20 @@ public class Shooter {
     
     public Position shootInGrid(){
         
-        Position shot;
-        
-        shot = gridPositions.get((int)(Math.random()*gridPositions.size()));
+        Position shot=gridPositions.get(0);
+        doComboMap();
+        System.out.println("Ze combo map");
+            for (int i = 9; i >= 0; i--) {              //Write from top -> 9
+                for (int j = 0; j < 10; j++) {          //Write from x=0;
+                    System.out.print(shipMap[j][i]+" ");
+                }
+                System.out.println("");
+                
+            }
+        //shot = gridPositions.get((int)(Math.random()*gridPositions.size()));
+        for (Position p : gridPositions) {
+            if (shipMap[shot.x][shot.y]<shipMap[p.x][p.y]) shot=p;
+        }
         gridPositions.remove(shot);
         
                 shotsFired.add(shot);
@@ -251,15 +262,20 @@ public class Shooter {
         }
         return false;
     }
-    
-//    public boolean checkForCluster(){
-//        for (Position p : hits) {
-//            if ((hits.contains(new Position(p.x-1,p.y)) || hits.contains(new Position(p.x+1,p.y)))
-//                    &&(hits.contains(new Position(p.x,p.y-1)) || hits.contains(new Position(p.x,p.y+1)))) cluster=true;
-//        }
-//        return cluster;
-//    }
-    
+    //Make a map of posible combinations of ships in each field
+public void doComboMap(){
+    int[][] map = new int[10][10];
+        for (int y = 9; y >= 0; y--) {              //Write from top -> 9
+                for (int x = 0; x < 10; x++) {          //Write from x=0;
+                    map[x][y]=possibleShipCombos(largest(),true,new Position(x,y));
+                    map[x][y]+=possibleShipCombos(largest(),false,new Position(x,y));
+                    map[x][y]+=possibleShipCombos(largest(),true,new Position(x,y));
+                    map[x][y]+=possibleShipCombos(largest(),false,new Position(x,y));
+                }
+        }
+        shipMap=map;
+}
+    // Check the amount of posible combinations in a specific spot
     public int  possibleShipCombos(Ship ship, boolean vertical, Position p){
         int[][] map = new int[10][10];
         for (int y = 9; y >= 0; y--) {              //Write from top -> 9
@@ -269,7 +285,7 @@ public class Shooter {
                         boolean fits=true;
                         for (int j = 0; j < ship.size(); j++) {
                             if (!vertical && (x+j>9 || shotMap[x+j][y]==-1)) fits=false;
-                            if (vertical && (y+j>9 || y>0 || shotMap[x][y+j]==-1)) fits=false;
+                            if (vertical && (y+j>9  || shotMap[x][y+j]==-1)) fits=false;
                         }
                         if (fits){
                             for (int j = 0; j < ship.size(); j++) { 
@@ -283,17 +299,17 @@ public class Shooter {
                 
                 
             }
-        System.out.println("Ze map");
-            for (int i = 9; i >= 0; i--) {              //Write from top -> 9
-                for (int j = 0; j < 10; j++) {          //Write from x=0;
-                    System.out.print(map[j][i]+" ");
-                }
-                System.out.println("");
-                
-            }
+//        System.out.println("Ze map");
+//            for (int i = 9; i >= 0; i--) {              //Write from top -> 9
+//                for (int j = 0; j < 10; j++) {          //Write from x=0;
+//                    System.out.print(map[j][i]+" ");
+//                }
+//                System.out.println("");
+//                
+//            }
         return map[p.x][p.y];
     }
-    public int [][] possibleShipCombosMap(Ship ship, boolean vertical, Position p){
+    public int [][] possibleShipCombosMap(Ship ship, boolean vertical){
         int[][] map = new int[10][10];
         for (int y = 9; y >= 0; y--) {              //Write from top -> 9
                 for (int x = 0; x < 10; x++) {          //Write from x=0;
@@ -316,14 +332,14 @@ public class Shooter {
                 
                 
             }
-        System.out.println("Ze map");
-            for (int i = 9; i >= 0; i--) {              //Write from top -> 9
-                for (int j = 0; j < 10; j++) {          //Write from x=0;
-                    System.out.print(map[j][i]+" ");
-                }
-                System.out.println("");
-                
-            }
+//        System.out.println("Ze map");
+//            for (int i = 9; i >= 0; i--) {              //Write from top -> 9
+//                for (int j = 0; j < 10; j++) {          //Write from x=0;
+//                    System.out.print(map[j][i]+" ");
+//                }
+//                System.out.println("");
+//                
+//            }
         return map;
     }
     
