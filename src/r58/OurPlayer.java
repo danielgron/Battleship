@@ -30,19 +30,23 @@ public class OurPlayer implements BattleshipsPlayer {
     private Position lastShot = new Position(0, 0);
     private final int[][] enemyShots = new int[10][10];
     private final int[][] ourShots = new int[10][10];
-    
+
     private ArrayList<Ship> shipsLeftBeforeShot = new ArrayList();
     private ArrayList<Ship> shipsLeftAfterShot = new ArrayList();
     private Ship lastSunk;
-    
-    private int round=0;
+    private boolean samePlacementAgain = false;
+
+    private int round = 0;
 
     private int numOfEnemyShips;
-    
-    private boolean testing=false;
-    
+
+    private boolean testing = false;
+
+    private FleetMaker fleetMaker;
 
     public OurPlayer() {
+        fleetMaker = new FleetMaker();
+
     }
 
     /**
@@ -63,78 +67,13 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public void placeShips(Fleet fleet, Board board) {
-        myBoard = board;
-        
-        sizeX = board.sizeX();
-        sizeY = board.sizeY();
-        s.setBoardX(sizeX);
-        s.setBoardY(sizeY);
-        
-        ArrayList<Position> ships = new ArrayList();
-        for (int i = 0; i < fleet.getNumberOfShips(); ++i) {
-            Ship s = fleet.getShip(i);
-            boolean vertical = rnd.nextBoolean();
-            boolean occupied = false;
-            Position pos;
-            if (vertical) {
-                int x = rnd.nextInt(sizeX);
-                int y = rnd.nextInt(sizeY - (s.size() - 1));
-                pos = new Position(x, y);
-                for (int j = 0; j < s.size(); j++) {
-                    if (ships.contains(new Position(x, y + j))) {
-                        x = rnd.nextInt(sizeX);
-                        y = rnd.nextInt(sizeY - (s.size() - 1));
-                        pos = new Position(x, y);
-                        j = 0;
-                    }
-                }
-                for (int j = 0; j < s.size(); j++) {
-                    if (s.size()==3 && round>=500){
-                        for (int k = 0; k < 10; k++) {
-                            if (enemyShots[k][j]<round/3 && enemyShots[k][j+2]<round/3){
-                                x=k;
-                                y=j;
-                            }
-                        }
-                    }
-                }
-                for (int j = 0; j < s.size(); j++) {
-                    if (ships.contains(new Position(x, y + j))) {
-                        x = rnd.nextInt(sizeX);
-                        y = rnd.nextInt(sizeY - (s.size() - 1));
-                        pos = new Position(x, y);
-                        j = 0;
-                    }
-                }
-                    
-
-                for (int j = 0; j < s.size(); j++) {
-                    ships.add(new Position(x, y + j));
-                }
-
-            } else {
-                int x = rnd.nextInt(sizeX - (s.size() - 1));
-                int y = rnd.nextInt(sizeY);
-                pos = new Position(x, y);
-                for (int j = 0; j < s.size(); j++) {
-                    if (ships.contains(new Position(x + j, y))) {
-                        x = rnd.nextInt(sizeX - (s.size() - 1));
-                        y = rnd.nextInt(sizeY);
-                        pos = new Position(x, y);
-                        j = 0;
-                    }
-                }
-
-                for (int j = 0; j < s.size(); j++) {
-                    ships.add(new Position(x + j, y));
-
-                }
-            }
-            for (Position ship : ships) {
-                //System.out.println("Occupied locations: " + ship.x + " " + ship.y);
-            }
-            board.placeShip(pos, s, vertical);
+          if (samePlacementAgain) {
+            fleetMaker.useSamePositionAgain(fleet, board);
+        } else {
+            fleetMaker.clearArrays();
+            fleetMaker.placeOurShips(fleet, board);
         }
+
     }
 
     /**
@@ -163,28 +102,31 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public Position getFireCoordinates(Fleet enemyShips) {
-        
+
         numOfEnemyShips = enemyShips.getNumberOfShips();
-        
+
         shipsLeftBeforeShot.clear();
         for (Ship enemyShip : enemyShips) {
             shipsLeftBeforeShot.add(enemyShip);
         }
         s.setEnemyRemaining(shipsLeftBeforeShot);
         s.setOP(this);
-        
+
         Position shot = null;
         if (!hunting) {
             shot = s.shootInGrid();
         } else if (hunting) {
-            shot=s.huntOtherWay();
-            if (shot==null) 
+            shot = s.huntOtherWay();
+            if (shot == null) {
                 shot = s.hunt(hit);
+            }
         }
 
         lastShot = shot;
 
-        if (testing)System.out.println("Shooting at " + shot.x + " " + shot.y);
+        if (testing) {
+            System.out.println("Shooting at " + shot.x + " " + shot.y);
+        }
         ourShots[shot.x][shot.y]++;
         return shot;
     }
@@ -202,76 +144,85 @@ public class OurPlayer implements BattleshipsPlayer {
     @Override
     public void hitFeedBack(boolean hit, Fleet enemyShips) {
         shipsLeftAfterShot.clear();
-        s.addShot(lastShot,hit);
-        
+        s.addShot(lastShot, hit);
+
         for (Ship enemyShip : enemyShips) {
             shipsLeftAfterShot.add(enemyShip);
         }
-        
+
 //        if (hunting && s.huntLocations.size() == 0) {
 //            System.out.println("No hunt locations, break out of hunting mode");
 //            hunting = false;
 //        }
-
         if (hunting && hit) {
-            s.possibleShipCombos(enemyShips.getShip(enemyShips.getNumberOfShips()-1), false, lastShot);
+            s.possibleShipCombos(enemyShips.getShip(enemyShips.getNumberOfShips() - 1), false, lastShot);
             //System.out.println("Working hunt suggestion: "+s.huntOtherWay().x+" "+s.huntOtherWay().y);
             this.hit = lastShot;
             s.addHits(this.hit);
             // Check for "cluster" of ships
             //Check for direction
         }
-        if (testing)System.out.println("count 1 "+numOfEnemyShips+" count2 "+enemyShips.getNumberOfShips());
+        if (testing) {
+            System.out.println("count 1 " + numOfEnemyShips + " count2 " + enemyShips.getNumberOfShips());
+        }
         if (!hunting && hit && numOfEnemyShips == enemyShips.getNumberOfShips()) {
             hunting = true;
             this.hit = lastShot;
             s.addHits(this.hit);
             //System.out.println("Hunting enabled!");
         }
-        if (testing)System.out.println("count 1 "+numOfEnemyShips+" count2 "+enemyShips.getNumberOfShips());
-        if (testing)System.out.println(numOfEnemyShips != enemyShips.getNumberOfShips());
+        if (testing) {
+            System.out.println("count 1 " + numOfEnemyShips + " count2 " + enemyShips.getNumberOfShips());
+        }
+        if (testing) {
+            System.out.println(numOfEnemyShips != enemyShips.getNumberOfShips());
+        }
         if (numOfEnemyShips != enemyShips.getNumberOfShips()) {
-            if (testing)System.out.println("We get inside the if");
+            if (testing) {
+                System.out.println("We get inside the if");
+            }
             // if we don't have any hits now hunting should be turned off:
-            
-            
-            
+
             ArrayList<Ship> temp = shipsLeftBeforeShot;
             for (Ship ship : shipsLeftAfterShot) {
                 shipsLeftBeforeShot.remove(ship);
             }
-            if (testing)System.out.println("We get past the for loop");
-            if (!shipsLeftBeforeShot.isEmpty()){                
-                lastSunk=shipsLeftBeforeShot.get(0);
-                if (testing)System.out.println("Last sunk has a size of "+lastSunk.size());
+            if (testing) {
+                System.out.println("We get past the for loop");
             }
-            else if (testing)System.out.println("Failed to find last sunken ship");
-            
+            if (!shipsLeftBeforeShot.isEmpty()) {
+                lastSunk = shipsLeftBeforeShot.get(0);
+                if (testing) {
+                    System.out.println("Last sunk has a size of " + lastSunk.size());
+                }
+            } else if (testing) {
+                System.out.println("Failed to find last sunken ship");
+            }
+
             s.shipWrecked(lastShot, lastSunk.size());
-            if (!s.checkForMoreTargets())hunting=false;
-            
-            
+            if (!s.checkForMoreTargets()) {
+                hunting = false;
+            }
+
             //System.out.println("Done hunting");
         }
-        
 
         //numOfEnemyShips = enemyShips.getNumberOfShips();
-        int[][] sunk=s.getSunkMap();
-        if (testing){
-        System.out.println("Knowledge Map");
+        int[][] sunk = s.getSunkMap();
+        if (testing) {
+            System.out.println("Knowledge Map");
             for (int i = 9; i >= 0; i--) {              //Write from top -> 9
                 for (int j = 0; j < 10; j++) {          //Write from x=0;
-                    System.out.print(sunk[j][i]+" ");
+                    System.out.print(sunk[j][i] + " ");
                 }
                 System.out.println("");
-                
+
             }
         }
-            
 
         //Do nothing
     }
-    
+
     /**
      * Called in the beginning of each match to inform about the number of
      * rounds being played.
@@ -290,7 +241,7 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public void startRound(int round) {
-        
+
         s.clearHunt();
         s.clearGridList();
         s.clearShotsFired();
@@ -298,8 +249,9 @@ public class OurPlayer implements BattleshipsPlayer {
         s.clearHits();
         s.resetShotMap();
         s.doComboMap();
-        
-        hunting=false;
+        fleetMaker.clearShipMap();
+
+        hunting = false;
 
         //Do nothing
     }
@@ -316,28 +268,36 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public void endRound(int round, int points, int enemyPoints) {   // Key to succes hidden here
-        this.round=round;
-        //if(points<=20 )System.out.println("80+ shots");
-        if (testing){
-        if (round==500){
-            for (int i = 9; i >= 0; i--) {              //Write from top -> 9
-                for (int j = 0; j < 10; j++) {          //Write from x=0;
-                    System.out.print(enemyShots[j][i]+" ");
-                }
-                System.out.println("");
-                
-            }
-            System.out.println("");
-            System.out.println("Our Shots");
-            for (int i = 9; i >= 0; i--) {              //Write from top -> 9
-                for (int j = 0; j < 10; j++) {          //Write from x=0;
-                    System.out.print(ourShots[j][i]+" ");
-                }
-                System.out.println("");
-                
-            }
-            System.out.println("");
+        if (enemyPoints < 50) {
+            System.out.println("Enemy go " + enemyPoints + " trying to use same pos again");
+            samePlacementAgain = true;
+
+        } else {
+            samePlacementAgain = false;
         }
+
+        this.round = round;
+        //if(points<=20 )System.out.println("80+ shots");
+        if (testing) {
+            if (round == 500) {
+                for (int i = 9; i >= 0; i--) {              //Write from top -> 9
+                    for (int j = 0; j < 10; j++) {          //Write from x=0;
+                        System.out.print(enemyShots[j][i] + " ");
+                    }
+                    System.out.println("");
+
+                }
+                System.out.println("");
+                System.out.println("Our Shots");
+                for (int i = 9; i >= 0; i--) {              //Write from top -> 9
+                    for (int j = 0; j < 10; j++) {          //Write from x=0;
+                        System.out.print(ourShots[j][i] + " ");
+                    }
+                    System.out.println("");
+
+                }
+                System.out.println("");
+            }
         }
         //Do nothing
     }
