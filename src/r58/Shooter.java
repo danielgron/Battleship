@@ -29,6 +29,7 @@ public class Shooter {
     private int boardY;
     private ArrayList<Ship> enemyRemaining= new ArrayList();
     private int[][] shipMap = new int [10][10];
+    private boolean testing= false;
     
     
     public void setBoardX(int boardX) {
@@ -81,7 +82,7 @@ public class Shooter {
         boolean down=true;
         boolean left=true;
         boolean right=true;
-        System.out.println("Looking for ship of length "+length+" to remove");
+        if(testing)System.out.println("Looking for ship of length "+length+" to remove");
         
         for (int i = 0; i < length; i++) {
             if (p.y+i>=10 || shotMap[p.x][p.y+i]!=1) up=false;
@@ -90,34 +91,34 @@ public class Shooter {
             if (p.x+i>=10 || shotMap[p.x+i][p.y]!=1) right=false;
         }
         if (up){
-            System.out.println("Removing ship up");
+            if(testing)System.out.println("Removing ship up");
             for (int i = 0; i < length; i++) {
                 shotMap[p.x][p.y+i]=-1;
                 
             }
         }
         if (down){
-            System.out.println("Removing ship down");
+            if(testing)System.out.println("Removing ship down");
             for (int i = 0; i < length; i++) {
                 shotMap[p.x][p.y-i]=-1;
                 
             }
         }
         if (left){
-            System.out.println("Removing ship left");
+            if(testing)System.out.println("Removing ship left");
             for (int i = 0; i < length; i++) {
                 shotMap[p.x-i][p.y]=-1;
                 
             }
         }
         if (right){
-            System.out.println("Removing ship right");
+            if(testing)System.out.println("Removing ship right");
             for (int i = 0; i < length; i++) {
                 shotMap[p.x+i][p.y]=-1;
             }
         }
         
-        if (!up && !down && !left && !right) System.out.println("Didn't find ship to remove");
+        if (testing && !up && !down && !left && !right) System.out.println("Didn't find ship to remove");
         
     }
         
@@ -156,9 +157,11 @@ public class Shooter {
     
     
     public Position shootInGrid(){
+        doComboMap();
         
         Position shot=gridPositions.get(0);
-        doComboMap();
+        
+        if (testing){
         System.out.println("Ze combo map");
             for (int i = 9; i >= 0; i--) {              //Write from top -> 9
                 for (int j = 0; j < 10; j++) {          //Write from x=0;
@@ -167,6 +170,7 @@ public class Shooter {
                 System.out.println("");
                 
             }
+        }
         //shot = gridPositions.get((int)(Math.random()*gridPositions.size()));
         for (Position p : gridPositions) {
             if (shipMap[shot.x][shot.y]<shipMap[p.x][p.y]) shot=p;
@@ -179,17 +183,7 @@ public class Shooter {
     public void clearHunt(){
         huntLocations.clear();
     }
-//    public Position newHunt(Position p){
-//        Position prospect = null;
-//        //If we've hit somthing on one side shoot in that direction.
-//        // Check bounds, if prospect has not been shot and that 
-//        if (p.x-1>0 && shotMap[p.x-1][p.y]==0 && shotMap[p.x+1][p.y]==1) prospect = new Position(p.x-1,p.y);
-//        if (p.x+1<10 && shotMap[p.x+1][p.y]==0 && shotMap[p.x-1][p.y]==1) prospect = new Position(p.x+1,p.y);
-//        if (p.y+1<10 && shotMap[p.x][p.y+1]==0 && shotMap[p.x][p.y-1]==1) prospect = new Position(p.x,p.y+1);
-//        if (p.y-1>0 && shotMap[p.x][p.y-1]==0 && shotMap[p.x][p.y+1]==1) prospect = new Position(p.x,p.y-1);
-//        
-//        return prospect;
-//    }
+
     public Position huntOtherWay(){
         Position prospect=null;
         
@@ -213,13 +207,9 @@ public class Shooter {
                 }
             }
         }
-        if (prospect==null)System.out.println("No more hunt succes, call method consulting map");
+        if (testing && prospect==null)System.out.println("Didn't find two connected hits, calling method consulting map");
         return prospect;
-        
     }
-    
-    
-    
     
     
     public Position hunt(Position hit){
@@ -247,7 +237,7 @@ public class Shooter {
             }
         }
         
-        System.out.println("Huntlocations "+huntLocations.size());
+        if(testing)System.out.println("Huntlocations "+huntLocations.size());
         
         Position shot = huntLocations.remove((int)(Math.random()*huntLocations.size()));
         shotsFired.add(shot);
@@ -264,49 +254,77 @@ public class Shooter {
     }
     //Make a map of posible combinations of ships in each field
 public void doComboMap(){
-    int[][] map = new int[10][10];
+    int[][] map1 = new int[10][10];
+    int[][] map2 = new int[10][10];
+    int[][] map3 = new int[10][10];
+    int[][] map4 = new int[10][10];
+                 //Write from x=0;
+                    
+                    map1=possibleShipCombosMap(largest(),true);
+                    map2=possibleShipCombosMap(largest(),false);
+                    map3=possibleShipCombosMap(smallest(),true);
+                    map4=possibleShipCombosMap(smallest(),false);
+                
+        shipMap= new int[10][10];
         for (int y = 9; y >= 0; y--) {              //Write from top -> 9
                 for (int x = 0; x < 10; x++) {          //Write from x=0;
-                    map[x][y]=possibleShipCombos(largest(),true,new Position(x,y));
-                    map[x][y]+=possibleShipCombos(largest(),false,new Position(x,y));
-                    map[x][y]+=possibleShipCombos(largest(),true,new Position(x,y));
-                    map[x][y]+=possibleShipCombos(largest(),false,new Position(x,y));
+                shipMap[x][y]+=map1[x][y];
+                shipMap[x][y]+=map2[x][y];
+                shipMap[x][y]+=map3[x][y];
+                shipMap[x][y]+=map4[x][y];
+                    //System.out.println("Hello");
+                    if(testing)System.out.print(map1[x][y]+" "+map2[x][y]+" "+map3[x][y]+" "+map4[x][y]);
                 }
         }
-        shipMap=map;
+        
+}
+
+public void updateComboMap(Position p){
+    for (int i = 1; i < 5; i++) {
+        shipMap[p.x][p.y]+=possibleShipCombos(largest(),true,new Position(p.x,p.y));
+        shipMap[p.x][p.y]+=possibleShipCombos(largest(),false,new Position(p.x,p.y));
+        shipMap[p.x][p.y]+=possibleShipCombos(smallest(),true,new Position(p.x,p.y));
+        shipMap[p.x][p.y]+=possibleShipCombos(smallest(),false,new Position(p.x,p.y));
+        
+        shipMap[p.x+i][p.y]+=possibleShipCombos(largest(),true,new Position(p.x+i,p.y));
+        shipMap[p.x+i][p.y]+=possibleShipCombos(largest(),false,new Position(p.x+i,p.y));
+        shipMap[p.x+i][p.y]+=possibleShipCombos(smallest(),true,new Position(p.x+i,p.y));
+        shipMap[p.x+i][p.y]+=possibleShipCombos(smallest(),false,new Position(p.x+i,p.y));
+        
+        shipMap[p.x-i][p.y]+=possibleShipCombos(largest(),true,new Position(p.x-i,p.y));
+        shipMap[p.x-i][p.y]+=possibleShipCombos(largest(),false,new Position(p.x-i,p.y));
+        shipMap[p.x-i][p.y]+=possibleShipCombos(smallest(),true,new Position(p.x-i,p.y));
+        shipMap[p.x-i][p.y]+=possibleShipCombos(smallest(),false,new Position(p.x-i,p.y));
+        
+        shipMap[p.x][p.y+i]+=possibleShipCombos(largest(),true,new Position(p.x,p.y+i));
+        shipMap[p.x][p.y+i]+=possibleShipCombos(largest(),false,new Position(p.x,p.y+i));
+        shipMap[p.x][p.y+i]+=possibleShipCombos(smallest(),true,new Position(p.x,p.y+i));
+        shipMap[p.x][p.y+i]+=possibleShipCombos(smallest(),false,new Position(p.x,p.y+i));
+        
+        shipMap[p.x][p.y-i]+=possibleShipCombos(largest(),true,new Position(p.x,p.y-i));
+        shipMap[p.x][p.y-i]+=possibleShipCombos(largest(),false,new Position(p.x,p.y-i));
+        shipMap[p.x][p.y-i]+=possibleShipCombos(smallest(),true,new Position(p.x,p.y-i));
+        shipMap[p.x][p.y-i]+=possibleShipCombos(smallest(),false,new Position(p.x,p.y-i));
+                
+    }
+    
 }
     // Check the amount of posible combinations in a specific spot
     public int  possibleShipCombos(Ship ship, boolean vertical, Position p){
         int[][] map = new int[10][10];
-        for (int y = 9; y >= 0; y--) {              //Write from top -> 9
-                for (int x = 0; x < 10; x++) {          //Write from x=0;
-                    
-                    
+                //Write from x=0;
                         boolean fits=true;
                         for (int j = 0; j < ship.size(); j++) {
-                            if (!vertical && (x+j>9 || shotMap[x+j][y]==-1)) fits=false;
-                            if (vertical && (y+j>9  || shotMap[x][y+j]==-1)) fits=false;
+                            if (!vertical && (p.x+j>9 || p.x+j<0 || shotMap[p.x+j][p.y]==-1)) fits=false;
+                            if (vertical && (p.y+j>9  || p.y+j<0|| shotMap[p.x][p.y+j]==-1)) fits=false;
                         }
                         if (fits){
                             for (int j = 0; j < ship.size(); j++) { 
-                            if (!vertical && shotMap[x+j][y]!=1) map[x+j][y]++;
-                            if (vertical && shotMap[x][y+j]!=1) map[x][y+j]++;
+                            if (!vertical && shotMap[p.x+j][p.y]!=1) map[p.x+j][p.y]++;
+                            if (vertical && shotMap[p.x][p.y+j]!=1) map[p.x][p.y+j]++;
                         }
-                        
-                        
                     }
-                }
                 
-                
-            }
-//        System.out.println("Ze map");
-//            for (int i = 9; i >= 0; i--) {              //Write from top -> 9
-//                for (int j = 0; j < 10; j++) {          //Write from x=0;
-//                    System.out.print(map[j][i]+" ");
-//                }
-//                System.out.println("");
-//                
-//            }
         return map[p.x][p.y];
     }
     public int [][] possibleShipCombosMap(Ship ship, boolean vertical){
@@ -314,32 +332,19 @@ public void doComboMap(){
         for (int y = 9; y >= 0; y--) {              //Write from top -> 9
                 for (int x = 0; x < 10; x++) {          //Write from x=0;
                     
-                    
                         boolean fits=true;
                         for (int j = 0; j < ship.size(); j++) {
                             if (!vertical && (x+j>9 || shotMap[x+j][y]==-1)) fits=false;
-                            if (vertical && (y+j>9 || y>0 || shotMap[x][y+j]==-1)) fits=false;
+                            if (vertical && (y+j>9 || shotMap[x][y+j]==-1)) fits=false;
                         }
                         if (fits){
                             for (int j = 0; j < ship.size(); j++) { 
                             if (!vertical && shotMap[x+j][y]!=1) map[x+j][y]++;
                             if (vertical && shotMap[x][y+j]!=1) map[x][y+j]++;
                         }
-                        
-                        
                     }
                 }
-                
-                
             }
-//        System.out.println("Ze map");
-//            for (int i = 9; i >= 0; i--) {              //Write from top -> 9
-//                for (int j = 0; j < 10; j++) {          //Write from x=0;
-//                    System.out.print(map[j][i]+" ");
-//                }
-//                System.out.println("");
-//                
-//            }
         return map;
     }
     

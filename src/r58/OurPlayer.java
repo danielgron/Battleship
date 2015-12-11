@@ -39,6 +39,8 @@ public class OurPlayer implements BattleshipsPlayer {
 
     private int numOfEnemyShips;
     
+    private boolean testing=false;
+    
 
     public OurPlayer() {
     }
@@ -161,6 +163,7 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public Position getFireCoordinates(Fleet enemyShips) {
+        
         numOfEnemyShips = enemyShips.getNumberOfShips();
         
         shipsLeftBeforeShot.clear();
@@ -181,7 +184,7 @@ public class OurPlayer implements BattleshipsPlayer {
 
         lastShot = shot;
 
-        System.out.println("Shooting at " + shot.x + " " + shot.y);
+        if (testing)System.out.println("Shooting at " + shot.x + " " + shot.y);
         ourShots[shot.x][shot.y]++;
         return shot;
     }
@@ -200,6 +203,7 @@ public class OurPlayer implements BattleshipsPlayer {
     public void hitFeedBack(boolean hit, Fleet enemyShips) {
         shipsLeftAfterShot.clear();
         s.addShot(lastShot,hit);
+        
         for (Ship enemyShip : enemyShips) {
             shipsLeftAfterShot.add(enemyShip);
         }
@@ -217,17 +221,17 @@ public class OurPlayer implements BattleshipsPlayer {
             // Check for "cluster" of ships
             //Check for direction
         }
-        System.out.println("count 1 "+numOfEnemyShips+" count2 "+enemyShips.getNumberOfShips());
+        if (testing)System.out.println("count 1 "+numOfEnemyShips+" count2 "+enemyShips.getNumberOfShips());
         if (!hunting && hit && numOfEnemyShips == enemyShips.getNumberOfShips()) {
             hunting = true;
             this.hit = lastShot;
             s.addHits(this.hit);
             //System.out.println("Hunting enabled!");
         }
-        System.out.println("count 1 "+numOfEnemyShips+" count2 "+enemyShips.getNumberOfShips());
-        System.out.println(numOfEnemyShips != enemyShips.getNumberOfShips());
+        if (testing)System.out.println("count 1 "+numOfEnemyShips+" count2 "+enemyShips.getNumberOfShips());
+        if (testing)System.out.println(numOfEnemyShips != enemyShips.getNumberOfShips());
         if (numOfEnemyShips != enemyShips.getNumberOfShips()) {
-            System.out.println("We get inside the if");
+            if (testing)System.out.println("We get inside the if");
             // if we don't have any hits now hunting should be turned off:
             
             
@@ -236,15 +240,16 @@ public class OurPlayer implements BattleshipsPlayer {
             for (Ship ship : shipsLeftAfterShot) {
                 shipsLeftBeforeShot.remove(ship);
             }
-            System.out.println("We get past the for loop");
+            if (testing)System.out.println("We get past the for loop");
             if (!shipsLeftBeforeShot.isEmpty()){                
                 lastSunk=shipsLeftBeforeShot.get(0);
-                System.out.println("Last sunk has a size of "+lastSunk.size());
+                if (testing)System.out.println("Last sunk has a size of "+lastSunk.size());
             }
-            else System.out.println("Failed to find last sunken ship");
+            else if (testing)System.out.println("Failed to find last sunken ship");
             
             s.shipWrecked(lastShot, lastSunk.size());
             if (!s.checkForMoreTargets())hunting=false;
+            
             
             //System.out.println("Done hunting");
         }
@@ -252,6 +257,7 @@ public class OurPlayer implements BattleshipsPlayer {
 
         //numOfEnemyShips = enemyShips.getNumberOfShips();
         int[][] sunk=s.getSunkMap();
+        if (testing){
         System.out.println("Knowledge Map");
             for (int i = 9; i >= 0; i--) {              //Write from top -> 9
                 for (int j = 0; j < 10; j++) {          //Write from x=0;
@@ -260,6 +266,8 @@ public class OurPlayer implements BattleshipsPlayer {
                 System.out.println("");
                 
             }
+        }
+            
 
         //Do nothing
     }
@@ -289,6 +297,7 @@ public class OurPlayer implements BattleshipsPlayer {
         s.fillGridList();
         s.clearHits();
         s.resetShotMap();
+        s.doComboMap();
         
         hunting=false;
 
@@ -308,6 +317,8 @@ public class OurPlayer implements BattleshipsPlayer {
     @Override
     public void endRound(int round, int points, int enemyPoints) {   // Key to succes hidden here
         this.round=round;
+        //if(points<=20 )System.out.println("80+ shots");
+        if (testing){
         if (round==500){
             for (int i = 9; i >= 0; i--) {              //Write from top -> 9
                 for (int j = 0; j < 10; j++) {          //Write from x=0;
@@ -326,6 +337,7 @@ public class OurPlayer implements BattleshipsPlayer {
                 
             }
             System.out.println("");
+        }
         }
         //Do nothing
     }
