@@ -106,7 +106,7 @@ public class FleetMaker {
         if (x >= 10 || y >= 10 || shipMap[x][y] == 1 || enemyShots[x][y] < TOLERANCE) {
             return false;
         }
-        if (size <= 1 && shipMap[x][y] == 0 && enemyShots[x][y] < TOLERANCE) {
+        if (size <= 1 && shipMap[x][y] == 0 && enemyShots[x][y] > TOLERANCE) {
             shipMap[x][y] = +1;
             return true;
         }
