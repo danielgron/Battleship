@@ -25,24 +25,32 @@ public class OurPlayer implements BattleshipsPlayer {
     private Board myBoard;
     private boolean hunting = false;
     private Fleet previousFleet;
-    private Shooter s = new Shooter();
+    private NextShooter s = new NextShooter();
     private Position hit = new Position(0, 0);
     private Position lastShot = new Position(0, 0);
     private final int[][] enemyShots = new int[10][10];
     private final int[][] ourShots = new int[10][10];
+    private ArrayList<Position> ourShipPos;
 
     private ArrayList<Ship> shipsLeftBeforeShot = new ArrayList();
     private ArrayList<Ship> shipsLeftAfterShot = new ArrayList();
     private Ship lastSunk;
     private boolean samePlacementAgain = false;
+    private int sumScore=0;
+    private int enPoints=0;
 
     private int round = 0;
-
     private int numOfEnemyShips;
-
     private boolean testing = false;
+    private boolean testingTournament = true;
 
     private FleetMaker fleetMaker;
+    private boolean round1=true;
+    private boolean noEnemyHits;
+    private int lostInRow;
+    private boolean firstShot;
+    private int failCount;
+    private boolean printRound;
 
     public OurPlayer() {
         fleetMaker = new FleetMaker();
@@ -67,13 +75,26 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public void placeShips(Fleet fleet, Board board) {
+        prepareShooter(board);
           if (samePlacementAgain) {
             fleetMaker.useSamePositionAgain(fleet, board);
         } else {
             fleetMaker.clearArrays();
             fleetMaker.placeOurShips(fleet, board);
         }
+          ourShipPos=fleetMaker.getSavedPos();
 
+    }
+    public void prepareShooter(Board board){
+        if (round1){
+        s.setBoardX(board.sizeX());
+        s.setBoardY(board.sizeY());
+        
+        s.startMaps();
+        
+        round1=false;
+        }
+        s.fillGridList();
     }
 
     /**
@@ -87,8 +108,12 @@ public class OurPlayer implements BattleshipsPlayer {
     @Override
     public void incoming(Position pos) {
         enemyShots[pos.x][pos.y]++;
+        if (!noEnemyHits && !ourShipPos.contains(pos)) s.addEnemyMiss(pos);
+        else noEnemyHits=true;
         //Do nothing
     }
+    
+    
 
     /**
      * Called by the Game application to get the Position of your shot.
@@ -102,19 +127,24 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public Position getFireCoordinates(Fleet enemyShips) {
-
+        if (firstShot){
+            //if (enemyShips.getNumberOfShips()<5){System.out.println("Less than 5 ships starting on enemy board. Count: "
+                    //+enemyShips.getNumberOfShips());
+            //printRound=true;
+            failCount++;
+            //}
+            firstShot=false;
+        }
         numOfEnemyShips = enemyShips.getNumberOfShips();
-
         shipsLeftBeforeShot.clear();
         for (Ship enemyShip : enemyShips) {
             shipsLeftBeforeShot.add(enemyShip);
         }
         s.setEnemyRemaining(shipsLeftBeforeShot);
-        s.setOP(this);
-
+       s.setOP(this);
         Position shot = null;
         if (!hunting) {
-            shot = s.shootInGrid();
+            shot = s.shootInGrid(0);
         } else if (hunting) {
             shot = s.huntOtherWay();
             if (shot == null) {
@@ -143,18 +173,18 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public void hitFeedBack(boolean hit, Fleet enemyShips) {
+        //System.out.println("Ships left "+ enemyShips.getNumberOfShips());
         shipsLeftAfterShot.clear();
         s.addShot(lastShot, hit);
+        if (enemyShips.getNumberOfShips()>0){
 
         for (Ship enemyShip : enemyShips) {
             shipsLeftAfterShot.add(enemyShip);
+            
+        }
         }
 
-//        if (hunting && s.huntLocations.size() == 0) {
-//            System.out.println("No hunt locations, break out of hunting mode");
-//            hunting = false;
-//        }
-        if (hunting && hit) {
+        if (hunting && hit && enemyShips.getNumberOfShips()!=0) {
             s.possibleShipCombos(enemyShips.getShip(enemyShips.getNumberOfShips() - 1), false, lastShot);
             //System.out.println("Working hunt suggestion: "+s.huntOtherWay().x+" "+s.huntOtherWay().y);
             this.hit = lastShot;
@@ -162,8 +192,10 @@ public class OurPlayer implements BattleshipsPlayer {
             // Check for "cluster" of ships
             //Check for direction
         }
-        if (testing) {
-            System.out.println("count 1 " + numOfEnemyShips + " count2 " + enemyShips.getNumberOfShips());
+        if (printRound && enemyShips.getNumberOfShips()==0) {
+            s.printOutMap(1);
+            printRound=false;
+            //System.out.println("count 1 " + numOfEnemyShips + " count2 " + enemyShips.getNumberOfShips());
         }
         if (!hunting && hit && numOfEnemyShips == enemyShips.getNumberOfShips()) {
             hunting = true;
@@ -171,14 +203,14 @@ public class OurPlayer implements BattleshipsPlayer {
             s.addHits(this.hit);
             //System.out.println("Hunting enabled!");
         }
-        if (testing) {
+        if (false) {
             System.out.println("count 1 " + numOfEnemyShips + " count2 " + enemyShips.getNumberOfShips());
         }
         if (testing) {
             System.out.println(numOfEnemyShips != enemyShips.getNumberOfShips());
         }
         if (numOfEnemyShips != enemyShips.getNumberOfShips()) {
-            if (testing) {
+            if (false) {
                 System.out.println("We get inside the if");
             }
             // if we don't have any hits now hunting should be turned off:
@@ -208,17 +240,7 @@ public class OurPlayer implements BattleshipsPlayer {
         }
 
         //numOfEnemyShips = enemyShips.getNumberOfShips();
-        int[][] sunk = s.getSunkMap();
-        if (testing) {
-            System.out.println("Knowledge Map");
-            for (int i = 9; i >= 0; i--) {              //Write from top -> 9
-                for (int j = 0; j < 10; j++) {          //Write from x=0;
-                    System.out.print(sunk[j][i] + " ");
-                }
-                System.out.println("");
-
-            }
-        }
+        
 
         //Do nothing
     }
@@ -231,6 +253,7 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public void startMatch(int rounds) {
+        
         //Do nothing
     }
 
@@ -245,11 +268,14 @@ public class OurPlayer implements BattleshipsPlayer {
         s.clearHunt();
         s.clearGridList();
         s.clearShotsFired();
-        s.fillGridList();
         s.clearHits();
         s.resetShotMap();
-        s.doComboMap();
+        s.coolDownPlacement();
+        s.newRound();
+        //s.doComboMap();
         fleetMaker.clearShipMap();
+        noEnemyHits=true;
+        firstShot=true;
 
         hunting = false;
 
@@ -268,18 +294,31 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public void endRound(int round, int points, int enemyPoints) {   // Key to succes hidden here
-        if (enemyPoints < 50) {
-            System.out.println("Enemy go " + enemyPoints + " trying to use same pos again");
+        //System.out.println("Turns to wreck: "+(100-points));
+        sumScore+=(100-points);
+        enPoints+=(100-enemyPoints);
+        if (points<enemyPoints && points<40){
+            lostInRow++;
+        }
+        else{
+            lostInRow=0;
+        }
+        
+        if (enemyPoints < 45) {
+            //System.out.println("Enemy go " + enemyPoints + " trying to use same pos again");
             samePlacementAgain = true;
 
         } else {
             samePlacementAgain = false;
         }
+        if (testingTournament && points==0) System.out.println("We used 100 shots");
 
         this.round = round;
         //if(points<=20 )System.out.println("80+ shots");
-        if (testing) {
-            if (round == 500) {
+        if (testingTournament) {
+            if (round % 1000 == 0) {
+                System.out.println("FailCount "+failCount);
+                System.out.println("Their shots");
                 for (int i = 9; i >= 0; i--) {              //Write from top -> 9
                     for (int j = 0; j < 10; j++) {          //Write from x=0;
                         System.out.print(enemyShots[j][i] + " ");
@@ -288,7 +327,7 @@ public class OurPlayer implements BattleshipsPlayer {
 
                 }
                 System.out.println("");
-                System.out.println("Our Shots");
+                System.out.println("Our Shots at round " + round);
                 for (int i = 9; i >= 0; i--) {              //Write from top -> 9
                     for (int j = 0; j < 10; j++) {          //Write from x=0;
                         System.out.print(ourShots[j][i] + " ");
@@ -297,6 +336,12 @@ public class OurPlayer implements BattleshipsPlayer {
 
                 }
                 System.out.println("");
+                System.out.println("Cooldown at round "+round);
+                s.printOutMap(6);
+                System.out.println("");
+                System.out.println("Our avg "+sumScore/round);
+                System.out.println("Their avg "+enPoints/round);
+                s.printOutMap(0);
             }
         }
         //Do nothing
@@ -313,5 +358,10 @@ public class OurPlayer implements BattleshipsPlayer {
     @Override
     public void endMatch(int won, int lost, int draw) {
         //Do nothing
+    }
+
+    private int chooseGrid() {
+        if (lostInRow>=4) return 1;
+        return 0;
     }
 }

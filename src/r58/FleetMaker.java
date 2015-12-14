@@ -40,6 +40,10 @@ public class FleetMaker {
             Arrays.fill(shipMap1, 0);
         }
     }
+    
+    public ArrayList<Position> getSavedPos(){
+        return savedPos;
+    }
 
     public void placeOurShips(Fleet fleet, Board board) {
 
@@ -165,7 +169,7 @@ public class FleetMaker {
     }
     
     public void useSamePositionAgain(Fleet fleet, Board board){
-        System.out.println("UsedSamePosition");
+        //System.out.println("UsedSamePosition");
         
             board.placeShip(savedPos.get(4), fleet.getShip(0), shipPlaced);
             board.placeShip(savedPos.get(3), fleet.getShip(1), shipPlaced);
