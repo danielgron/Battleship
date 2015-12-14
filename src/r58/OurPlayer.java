@@ -42,7 +42,7 @@ public class OurPlayer implements BattleshipsPlayer {
     private int round = 0;
     private int numOfEnemyShips;
     private boolean testing = false;
-    private boolean testingTournament = true;
+    private boolean testingTournament = false;
     private int numberOfShots = 0;
 
     private FleetMaker fleetMaker;
@@ -115,7 +115,7 @@ public class OurPlayer implements BattleshipsPlayer {
         //Do nothing
         
         numberOfShots++;
-        if (numberOfShots< 40) {
+        if (numberOfShots< fleetMaker.numberOfShotsCounted) {
             fleetMaker.heatUpHeatMap(pos);
         }
     }
@@ -301,6 +301,10 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public void endRound(int round, int points, int enemyPoints) {   // Key to succes hidden here
+        fleetMaker.cooldownHeatMap();
+        if (round % 100 == 0) {
+                fleetMaker.printOutHeatMap(round);
+        }
         //System.out.println("Turns to wreck: "+(100-points));
         sumScore+=(100-points);
         enPoints+=(100-enemyPoints);
@@ -323,7 +327,8 @@ public class OurPlayer implements BattleshipsPlayer {
         this.round = round;
         //if(points<=20 )System.out.println("80+ shots");
         if (testingTournament) {
-            if (round % 1000 == 0) {
+            if (round % 100 == 0) {
+                fleetMaker.printOutHeatMap(round);
                 System.out.println("FailCount "+failCount);
                 System.out.println("Their shots");
                 for (int i = 9; i >= 0; i--) {              //Write from top -> 9

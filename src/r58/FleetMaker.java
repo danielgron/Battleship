@@ -33,11 +33,11 @@ public class FleetMaker {
     public int numberOfTimesEveryShipIsPlaced = 0;
    
     //Tweaking "smart" ship placement
-    private final double HEATUP = 5;
-    private final double INITIALHEATUP = 20;
+    private final double HEATUP = 3;
+    private final double INITIALHEATUP = 35;
     private final double COOLDOWN = 0.5;
-    private final int TOLERANCE = 10;
-    public int numberOfShots = 15;
+    private final int TOLERANCE = 20;
+    public int numberOfShotsCounted = 25;
 
     public FleetMaker() {
         //Making a temporary map of where we place our ships
@@ -243,7 +243,7 @@ public class FleetMaker {
 
     public void heatUpHeatMap(Position pos) {
         if (enemyShots[pos.x][pos.y] < 100) {
-            enemyShots[pos.x][pos.y]++;
+            enemyShots[pos.x][pos.y] = enemyShots[pos.x][pos.y] + this.HEATUP;
         }
     }
 
@@ -271,5 +271,25 @@ public class FleetMaker {
 
     public ArrayList<Position> getSavedPos() {
         return savedPos;
+    }
+    
+    public void printOutHeatMap(int round) {
+        //Do nothing
+        System.out.println("Print out heatmap for round: " + round);
+        for (int i = 9; i >= 0; i--) {              //Write from top -> 9
+            for (int j = 0; j < 10; j++) {          //Write from x=0;
+                if (enemyShots[j][i] < 10) {
+                    System.out.print("00" + (int) enemyShots[j][i] + " ");
+
+                } else if (enemyShots[j][i] < 100) {
+                    System.out.print("0" + (int) enemyShots[j][i] + " ");
+                } else {
+                    System.out.print((int) enemyShots[j][i] + " ");
+                }
+
+            }
+            System.out.println("");
+
+        }
     }
 }
