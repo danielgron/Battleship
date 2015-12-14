@@ -34,7 +34,7 @@ public class R58 implements PlayerFactory<BattleshipsPlayer>
     @Override
     public String getName()
     {
-        return "Rock and Roll Zygicide";
+        return "Unified Bomber";
     }
     
 }

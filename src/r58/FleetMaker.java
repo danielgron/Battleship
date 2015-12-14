@@ -28,10 +28,20 @@ public class FleetMaker {
     private boolean shipPlaced;
     private ArrayList<Position> savedPos = new ArrayList<>();
     private ArrayList<Boolean> verticalSave = new ArrayList<>();
+    public double[][] enemyShots = new double[10][10];
+    public int numbersOfShipsPlaced = 0;
+    public int numberOfTimesEveryShipIsPlaced = 0;
+   
+    //Tweaking "smart" ship placement
+    private final double HEATUP = 5;
+    private final double INITIALHEATUP = 20;
+    private final double COOLDOWN = 0.5;
+    private final int TOLERANCE = 10;
+    public int numberOfShots = 15;
 
     public FleetMaker() {
         //Making a temporary map of where we place our ships
-        shipMap = new int[12][12];
+        shipMap = new int[10][10];
         clearShipMap();
     }
 
@@ -40,43 +50,79 @@ public class FleetMaker {
             Arrays.fill(shipMap1, 0);
         }
     }
-    
-    public ArrayList<Position> getSavedPos(){
-        return savedPos;
-    }
 
     public void placeOurShips(Fleet fleet, Board board) {
-
+        this.numbersOfShipsPlaced = 0;
         sizeX = board.sizeX();
         sizeY = board.sizeY();
         boolean vert = true;
         boolean tryShip;
         boolean placeOneAppart = rnd.nextBoolean();
-        for (int i = fleet.getNumberOfShips()-1; i >=0 ; i--) {
+        for (int i = fleet.getNumberOfShips() - 1; i >= 0; i--) {
+            int tryCount = 0;
             Ship s = fleet.getShip(i);
             //System.out.println("Placing ship of size: " + s.size());
-        
-            tryShip = false;
 
-            while (!tryShip) {
+            tryShip = false;
+            while (!tryShip && tryCount <= 500) {
                 nextX = rnd.nextInt(sizeX);
                 nextY = rnd.nextInt(sizeY);
                 vert = rnd.nextBoolean();
-                if(placeOneAppart) tryShip = placePosRandom(nextX, nextY, s.size(), vert);
-                else tryShip = placePosOneAppart(nextX, nextY, s.size(), vert);
-
+                tryShip = placeShipAdapting(nextX, nextY, s.size(), vert);
+                tryCount++;
+            }
+            while (!tryShip && tryCount > 500) {
+                nextX = rnd.nextInt(sizeX);
+                nextY = rnd.nextInt(sizeY);
+                vert = rnd.nextBoolean();
+                if (placeOneAppart) {
+                    tryShip = placePosRandom(nextX, nextY, s.size(), vert);
+                } else {
+                    tryShip = placePosOneAppart(nextX, nextY, s.size(), vert);
+                }
+                tryCount++;
             }
             Position pos = new Position(nextX, nextY);
             savedPos.add(pos);
             verticalSave.add(vert);
             board.placeShip(pos, s, vert);
+            this.numbersOfShipsPlaced++;
 
         }
+        this.numberOfTimesEveryShipIsPlaced++;
+//        System.out.println("PlaceOneAppart: " + placeOneAppart);
+//        System.out.println("Numbers of ships placed: " + this.numbersOfShipsPlaced);
+//        System.out.println(this.numberOfTimesEveryShipIsPlaced);
 
     }
-    public void clearArrays(){
+
+    public void clearArrays() {
         savedPos.clear();
         verticalSave.clear();
+    }
+
+    public boolean placeShipAdapting(int x, int y, int size, boolean vert) {
+
+        if (x >= 10 || y >= 10 || shipMap[x][y] == 1 || enemyShots[x][y] < TOLERANCE) {
+            return false;
+        }
+        if (size <= 1 && shipMap[x][y] == 0 && enemyShots[x][y] < TOLERANCE) {
+            shipMap[x][y] = +1;
+            return true;
+        }
+        shipPlaced = false;
+        shipMap[x][y] = shipMap[x][y] + 1;
+
+        if (shipMap[x][y] == 1 && vert) {
+            this.shipPlaced = placePosRandom(x, y + 1, size - 1, vert);
+        }
+        if (shipMap[x][y] == 1 && !vert) {
+            this.shipPlaced = placePosRandom(x + 1, y, size - 1, vert);
+        }
+        if (!this.shipPlaced) {
+            this.shipMap[x][y] = this.shipMap[x][y] - 1;
+        }
+        return this.shipPlaced;
     }
 
     public boolean placePosRandom(int x, int y, int size, boolean vert) {
@@ -90,7 +136,7 @@ public class FleetMaker {
         }
         shipPlaced = false;
         shipMap[x][y] = shipMap[x][y] + 1;
-        
+
         if (shipMap[x][y] == 1 && vert) {
             this.shipPlaced = placePosRandom(x, y + 1, size - 1, vert);
         }
@@ -104,7 +150,6 @@ public class FleetMaker {
     }
 
     public boolean placePosOneAppart(int x, int y, int size, boolean vert) {
-     
 
         if (x >= 10 || y >= 10 || shipMap[x][y] >= 1) {
             return false;
@@ -167,16 +212,16 @@ public class FleetMaker {
         }
         return this.shipPlaced;
     }
-    
-    public void useSamePositionAgain(Fleet fleet, Board board){
-        //System.out.println("UsedSamePosition");
-        
-            board.placeShip(savedPos.get(4), fleet.getShip(0), shipPlaced);
-            board.placeShip(savedPos.get(3), fleet.getShip(1), shipPlaced);
-            board.placeShip(savedPos.get(2), fleet.getShip(2), shipPlaced);
-            board.placeShip(savedPos.get(1), fleet.getShip(3), shipPlaced);
-            board.placeShip(savedPos.get(0), fleet.getShip(4), shipPlaced);
-        
+
+    public void useSamePositionAgain(Fleet fleet, Board board) {
+        System.out.println("UsedSamePosition");
+
+        board.placeShip(savedPos.get(4), fleet.getShip(0), verticalSave.get(4));
+        board.placeShip(savedPos.get(3), fleet.getShip(1), verticalSave.get(3));
+        board.placeShip(savedPos.get(2), fleet.getShip(2), verticalSave.get(2));
+        board.placeShip(savedPos.get(1), fleet.getShip(3), verticalSave.get(1));
+        board.placeShip(savedPos.get(0), fleet.getShip(4), verticalSave.get(0));
+
     }
 
     @Override
@@ -194,5 +239,37 @@ public class FleetMaker {
         }
 
         return str;
+    }
+
+    public void heatUpHeatMap(Position pos) {
+        if (enemyShots[pos.x][pos.y] < 100) {
+            enemyShots[pos.x][pos.y]++;
+        }
+    }
+
+    public void cooldownHeatMap() {
+
+        for (int i = enemyShots.length - 1; i >= 0; i--) {
+            for (int j = 0; j < enemyShots.length; j++) {
+                if (enemyShots[j][i] >= COOLDOWN) {
+                    enemyShots[j][i] = enemyShots[j][i] - COOLDOWN;
+                }
+
+            }
+
+        }
+
+    }
+    
+    public void initialHeat(){
+        enemyShots[4][4] = this.INITIALHEATUP;
+        enemyShots[4][5] = this.INITIALHEATUP;
+        enemyShots[5][4] = this.INITIALHEATUP;
+        enemyShots[5][5] = this.INITIALHEATUP;
+        
+    }
+
+    public ArrayList<Position> getSavedPos() {
+        return savedPos;
     }
 }

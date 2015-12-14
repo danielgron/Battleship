@@ -43,6 +43,7 @@ public class OurPlayer implements BattleshipsPlayer {
     private int numOfEnemyShips;
     private boolean testing = false;
     private boolean testingTournament = true;
+    private int numberOfShots = 0;
 
     private FleetMaker fleetMaker;
     private boolean round1=true;
@@ -85,6 +86,7 @@ public class OurPlayer implements BattleshipsPlayer {
           ourShipPos=fleetMaker.getSavedPos();
 
     }
+    
     public void prepareShooter(Board board){
         if (round1){
         s.setBoardX(board.sizeX());
@@ -111,6 +113,11 @@ public class OurPlayer implements BattleshipsPlayer {
         if (!noEnemyHits && !ourShipPos.contains(pos)) s.addEnemyMiss(pos);
         else noEnemyHits=true;
         //Do nothing
+        
+        numberOfShots++;
+        if (numberOfShots< 40) {
+            fleetMaker.heatUpHeatMap(pos);
+        }
     }
     
     
@@ -253,7 +260,7 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public void startMatch(int rounds) {
-        
+        fleetMaker.initialHeat();
         //Do nothing
     }
 
@@ -304,7 +311,7 @@ public class OurPlayer implements BattleshipsPlayer {
             lostInRow=0;
         }
         
-        if (enemyPoints < 45) {
+        if (enemyPoints < 50) {
             //System.out.println("Enemy go " + enemyPoints + " trying to use same pos again");
             samePlacementAgain = true;
 
@@ -344,6 +351,7 @@ public class OurPlayer implements BattleshipsPlayer {
                 s.printOutMap(0);
             }
         }
+        numberOfShots = 0;
         //Do nothing
     }
 
