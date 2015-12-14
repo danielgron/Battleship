@@ -33,10 +33,10 @@ public class FleetMaker {
     public int numberOfTimesEveryShipIsPlaced = 0;
    
     //Tweaking "smart" ship placement
-    private final double HEATUP = 3;
-    private final double INITIALHEATUP = 35;
+    private final double HEATUP = 2;
+    private final double INITIALHEATUP = 15;
     private final double COOLDOWN = 0.5;
-    private final int TOLERANCE = 20;
+    private final int TOLERANCE = 10;
     public int numberOfShotsCounted = 25;
 
     public FleetMaker() {
@@ -103,10 +103,10 @@ public class FleetMaker {
 
     public boolean placeShipAdapting(int x, int y, int size, boolean vert) {
 
-        if (x >= 10 || y >= 10 || shipMap[x][y] == 1 || enemyShots[x][y] < TOLERANCE) {
+        if (x >= 10 || y >= 10 || shipMap[x][y] == 1 || enemyShots[x][y] > TOLERANCE) {
             return false;
         }
-        if (size <= 1 && shipMap[x][y] == 0 && enemyShots[x][y] > TOLERANCE) {
+        if (size <= 1 && shipMap[x][y] == 0 && enemyShots[x][y] < TOLERANCE) {
             shipMap[x][y] = +1;
             return true;
         }
