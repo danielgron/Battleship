@@ -33,10 +33,10 @@ public class FleetMaker {
     public int numberOfTimesEveryShipIsPlaced = 0;
    
     //Tweaking "smart" ship placement
-    private final double HEATUP = 2;
-    private final double INITIALHEATUP = 15;
+    private final double HEATUP = 25;
+    private final double INITIALHEATUP = 25;
     private final double COOLDOWN = 0.5;
-    private final int TOLERANCE = 10;
+    private final int TOLERANCE = 30;
     public int numberOfShotsCounted = 25;
 
     public FleetMaker() {
@@ -214,7 +214,7 @@ public class FleetMaker {
     }
 
     public void useSamePositionAgain(Fleet fleet, Board board) {
-        System.out.println("UsedSamePosition");
+        //System.out.println("UsedSamePosition");
 
         board.placeShip(savedPos.get(4), fleet.getShip(0), verticalSave.get(4));
         board.placeShip(savedPos.get(3), fleet.getShip(1), verticalSave.get(3));
@@ -271,6 +271,9 @@ public class FleetMaker {
 
     public ArrayList<Position> getSavedPos() {
         return savedPos;
+    }
+    public ArrayList<Boolean> getVerticalSave(){
+        return verticalSave;
     }
     
     public void printOutHeatMap(int round) {
