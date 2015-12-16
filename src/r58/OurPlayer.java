@@ -31,6 +31,8 @@ public class OurPlayer implements BattleshipsPlayer {
     private final int[][] enemyShots = new int[10][10];
     private final int[][] ourShots = new int[10][10];
     private ArrayList<Position> ourShipPos;
+    //private final static MySecurityManager mySecurityManager =
+      //    new MySecurityManager();
 
     private ArrayList<Ship> shipsLeftBeforeShot = new ArrayList();
     private ArrayList<Ship> shipsLeftAfterShot = new ArrayList();
@@ -52,6 +54,8 @@ public class OurPlayer implements BattleshipsPlayer {
     private boolean firstShot;
     private int failCount;
     private boolean printRound;
+    private int lost;
+    private int won;
 
     public OurPlayer() {
         fleetMaker = new FleetMaker();
@@ -143,12 +147,7 @@ public class OurPlayer implements BattleshipsPlayer {
     @Override
     public Position getFireCoordinates(Fleet enemyShips) {
         if (firstShot){
-            //if (enemyShips.getNumberOfShips()<5){System.out.println("Less than 5 ships starting on enemy board. Count: "
-                    //+enemyShips.getNumberOfShips());
-            //printRound=true;
-            //System.out.println("Thing go sour after first shot called");
             s.makeOurBoard(ourShipPos, fleetMaker.getVerticalSave());
-            //}
             firstShot=false;
         }
         numOfEnemyShips = enemyShips.getNumberOfShips();
@@ -160,7 +159,7 @@ public class OurPlayer implements BattleshipsPlayer {
        s.setOP(this);
         Position shot = null;
         if (!hunting) {
-            shot = s.shootInGrid(0);
+            shot = s.shootInGrid(chooseGrid());
         } else if (hunting) {
             shot = s.huntOtherWay();
             if (shot == null) {
@@ -311,6 +310,12 @@ public class OurPlayer implements BattleshipsPlayer {
     @Override
     public void endRound(int round, int points, int enemyPoints) {   // Key to succes hidden here
         fleetMaker.cooldownHeatMap();
+        this.round=round;
+        if (points<enemyPoints) lost++;
+        if(enemyPoints<points) won++;
+        
+        
+        
         if (round % 100 == 0) {
                 fleetMaker.printOutHeatMap(round);
                 s.printOutMap(5);
@@ -387,7 +392,13 @@ public class OurPlayer implements BattleshipsPlayer {
     
 
     private int chooseGrid() {
-        if (lostInRow>=4) return 1;
-        return 0;
+        if (round<=50) return 0;
+        else if (round>50 && ((won*100)/(lost*100))<2) return 1;
+        else return 0;
     }
+
 }
+
+
+
+    
