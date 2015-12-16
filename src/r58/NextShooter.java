@@ -67,6 +67,12 @@ public class NextShooter {
     }
 
     public void printOutMap(int map) {
+        if (map==5)System.out.println("Their shots until hit:");
+        if (map==6)System.out.println("Heatmap of their placements");
+        if (map==3)System.out.println("Map of all our shots");
+
+
+        //if (map==6)System.out.println("");
         System.out.println("Map number " + map);
         for (int i = boardY - 1; i >= 0; i--) {              //Write from top -> 9
             for (int j = 0; j < boardX; j++) {          //Write from x=0;
@@ -286,11 +292,48 @@ public class NextShooter {
         if (gridCase == 0) {
             return shootInGridNormal();
         }
+        
+        if (gridCase == 1) {
+            return shootInGridHeatBased();
+        }
         //if (gridCase==2) return shootSamePosition();
-        return shootInGridNormal();
+        return shootInGridHeatBased();
+    }
+    public Position shootInGridNormal(){
+        
+        doComboMap();
+        Position shot=gridPositions.get(0);
+        //System.out.println("Got default shot");
+        if (testing){
+        printOutMap(SHIPCOMBOS);
+        }
+        //shot = gridPositions.get((int)(Math.random()*gridPositions.size()));
+        for (Position p : gridPositions) {
+            if (maps[shot.x][shot.y][SHIPCOMBOS]<maps[p.x][p.y][SHIPCOMBOS]) shot=p;
+        }
+        int highestValue = maps[shot.x][shot.y][SHIPCOMBOS];
+        for (Position p : gridPositions) {
+            if (maps[p.x][p.y][SHIPCOMBOS]==highestValue 
+                    && maps[shot.x][shot.y][THEIRPLACEMENTS]<maps[p.x][p.y][THEIRPLACEMENTS]) shot=p;
+        }
+        for (Position p : gridPositions) {
+            if (maps[p.x][p.y][THEIRPLACEMENTS]>35) {
+                shot=p;
+                //System.out.println("Shot changed "+shot.x + " "+shot.y);
+                    
+            }
+            //System.out.println("shot determined by previous placement");
+            
+            
+        }
+        
+        gridPositions.remove(shot);
+        
+                shotsFired.add(shot);
+        return shot;
     }
 
-    public Position shootInGridNormal() {
+    public Position shootInGridHeatBased() {
 
         doComboMap();
         Position shot = gridPositions.get((int)(Math.random()*gridPositions.size()));

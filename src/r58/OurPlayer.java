@@ -31,8 +31,8 @@ public class OurPlayer implements BattleshipsPlayer {
     private final int[][] enemyShots = new int[10][10];
     private final int[][] ourShots = new int[10][10];
     private ArrayList<Position> ourShipPos;
-    //private final static MySecurityManager mySecurityManager =
-      //    new MySecurityManager();
+    private final static MySecurityManager mySecurityManager =
+          new MySecurityManager();
 
     private ArrayList<Ship> shipsLeftBeforeShot = new ArrayList();
     private ArrayList<Ship> shipsLeftAfterShot = new ArrayList();
@@ -113,6 +113,7 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public void incoming(Position pos) {
+        
         enemyShots[pos.x][pos.y]++;
         if (!EnemyHasHitUs && !s.checkIfHit(pos)) {
             s.enemyMissBeforeHit(pos);
@@ -130,6 +131,7 @@ public class OurPlayer implements BattleshipsPlayer {
         //if (numberOfShots< fleetMaker.numberOfShotsCounted) {
         //    fleetMaker.heatUpHeatMap(pos);
         //}
+        System.out.println(mySecurityManager.getCallerClassName(2));
     }
     
     
