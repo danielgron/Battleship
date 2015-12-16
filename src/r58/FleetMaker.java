@@ -28,10 +28,12 @@ public class FleetMaker {
     private boolean shipPlaced;
     private ArrayList<Position> savedPos = new ArrayList<>();
     private ArrayList<Boolean> verticalSave = new ArrayList<>();
+    public ArrayList<SavedShip> savedShips = new ArrayList<>();
+
     public double[][] enemyShots = new double[10][10];
     public int numbersOfShipsPlaced = 0;
     public int numberOfTimesEveryShipIsPlaced = 0;
-   
+
     //Tweaking "smart" ship placement
     private final double HEATUP = 25;
     private final double INITIALHEATUP = 25;
@@ -83,6 +85,7 @@ public class FleetMaker {
                 tryCount++;
             }
             Position pos = new Position(nextX, nextY);
+            this.savedShips.add(new SavedShip(pos, fleet.getShip(i), vert));
             savedPos.add(pos);
             verticalSave.add(vert);
             board.placeShip(pos, s, vert);
@@ -99,6 +102,7 @@ public class FleetMaker {
     public void clearArrays() {
         savedPos.clear();
         verticalSave.clear();
+        savedShips.clear();
     }
 
     public boolean placeShipAdapting(int x, int y, int size, boolean vert) {
@@ -215,12 +219,58 @@ public class FleetMaker {
 
     public void useSamePositionAgain(Fleet fleet, Board board) {
         //System.out.println("UsedSamePosition");
+        System.out.println("UsedSamePosition");
+        int shipNumber = 4;
+        for (SavedShip savedShip : savedShips) {
+            board.placeShip(savedShip.getPos(), fleet.getShip(shipNumber), savedShip.isVert());
+            shipNumber--;
+        }
+//        board.placeShip(savedPos.get(4), fleet.getShip(0), verticalSave.get(4));
+//        board.placeShip(savedPos.get(3), fleet.getShip(1), verticalSave.get(3));
+//        board.placeShip(savedPos.get(2), fleet.getShip(2), verticalSave.get(2));
+//        board.placeShip(savedPos.get(1), fleet.getShip(3), verticalSave.get(1));
+//        board.placeShip(savedPos.get(0), fleet.getShip(4), verticalSave.get(0));
 
-        board.placeShip(savedPos.get(4), fleet.getShip(0), verticalSave.get(4));
-        board.placeShip(savedPos.get(3), fleet.getShip(1), verticalSave.get(3));
-        board.placeShip(savedPos.get(2), fleet.getShip(2), verticalSave.get(2));
-        board.placeShip(savedPos.get(1), fleet.getShip(3), verticalSave.get(1));
-        board.placeShip(savedPos.get(0), fleet.getShip(4), verticalSave.get(0));
+    }
+
+    public void turnMap45Degrees(Board board) {
+
+        for (SavedShip savedShip : savedShips) {
+            int x = savedShip.getPos().x;
+            int y = savedShip.getPos().y;
+
+            if (x >= 0 && x <= 4 && y >= 0 && y <= 9) {
+                if (savedShip.isVert()) {
+                    int tempY = y;
+                    y = board.sizeX() - 1 - x;
+                    x = tempY;
+                    savedShip.setPos(new Position(x, y));
+                    savedShip.setVert(!savedShip.isVert());
+                } else if (!savedShip.isVert()) {
+                    int tempX = x;
+                    x = y;
+                    y = board.sizeY() - tempX - savedShip.getShip().size();
+                    savedShip.setPos(new Position(x, y));
+                    savedShip.setVert(!savedShip.isVert());
+                }
+            } else if (x >= 5 && x <= 9 && y >= 0 && y <= 9) {
+                if (savedShip.isVert()) {
+                    int tempY = y;
+                    y = board.sizeX() - 1 - x;
+                    x = tempY;
+                    savedShip.setPos(new Position(x, y));
+                    savedShip.setVert(!savedShip.isVert());
+                } else if (!savedShip.isVert()) {
+                    int tempX = x;
+                    x = y;
+                    y = board.sizeX() - tempX - savedShip.getShip().size();
+                    savedShip.setPos(new Position(x, y));
+                    savedShip.setVert(!savedShip.isVert());
+                }
+
+            }
+
+        }
 
     }
 
@@ -260,22 +310,23 @@ public class FleetMaker {
         }
 
     }
-    
-    public void initialHeat(){
+
+    public void initialHeat() {
         enemyShots[4][4] = this.INITIALHEATUP;
         enemyShots[4][5] = this.INITIALHEATUP;
         enemyShots[5][4] = this.INITIALHEATUP;
         enemyShots[5][5] = this.INITIALHEATUP;
-        
+
     }
 
     public ArrayList<Position> getSavedPos() {
         return savedPos;
     }
-    public ArrayList<Boolean> getVerticalSave(){
+
+    public ArrayList<Boolean> getVerticalSave() {
         return verticalSave;
     }
-    
+
     public void printOutHeatMap(int round) {
         //Do nothing
         System.out.println("Print out heatmap for round: " + round);

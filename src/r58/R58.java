@@ -34,7 +34,7 @@ public class R58 implements PlayerFactory<BattleshipsPlayer>
     @Override
     public String getName()
     {
-        return "Unified Bomber";
+        return "Unified Spinning Adaptable Bomber";
     }
     
 }
