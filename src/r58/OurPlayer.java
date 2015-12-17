@@ -56,6 +56,10 @@ public class OurPlayer implements BattleshipsPlayer {
     private boolean printRound;
     private int lost;
     private int won;
+    private ArrayList<Integer> lastFifty = new ArrayList();
+    private boolean charlieSheening=true;
+    private int strategyChoice=0;
+    private int shotsThisRound=0;
 
     public OurPlayer() {
         fleetMaker = new FleetMaker();
@@ -132,7 +136,6 @@ public class OurPlayer implements BattleshipsPlayer {
         //if (numberOfShots< fleetMaker.numberOfShotsCounted) {
         //    fleetMaker.heatUpHeatMap(pos);
         //}
-        // System.out.println(mySecurityManager.getCallerClassName(2));
     }
 
     /**
@@ -189,6 +192,7 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public void hitFeedBack(boolean hit, Fleet enemyShips) {
+        shotsThisRound++;
         //System.out.println("Ships left "+ enemyShips.getNumberOfShips());
         shipsLeftAfterShot.clear();
         s.addShot(lastShot, hit);
@@ -267,7 +271,9 @@ public class OurPlayer implements BattleshipsPlayer {
      */
     @Override
     public void startMatch(int rounds) {
+        System.out.println("Starting match");
         fleetMaker.initialHeat();
+        
         //Do nothing
     }
 
@@ -288,6 +294,7 @@ public class OurPlayer implements BattleshipsPlayer {
         s.newRound();
         //s.doComboMap();
         fleetMaker.clearShipMap();
+        shotsThisRound=0;
         EnemyHasHitUs = false;
         firstShot = true;
 
@@ -312,9 +319,16 @@ public class OurPlayer implements BattleshipsPlayer {
         this.round = round;
         if (points < enemyPoints) {
             lost++;
+            lastFifty.add(0);
         }
         if (enemyPoints < points) {
             won++;
+            lastFifty.add(1);
+        }
+        if (lastFifty.size()>50){
+            lastFifty.remove(0);
+            evaluate();
+            
         }
 
         if (round % 100 == 0) {
@@ -392,13 +406,42 @@ public class OurPlayer implements BattleshipsPlayer {
     }
 
     private int chooseGrid() {
+        if (strategyChoice==0){
+            if (shotsThisRound>10) return 3;
         if (round <= 50) {
             return 0;
-        } else if (round > 50 && ((won * 100) / (lost * 100)) < 2) {
+        } else if (round > 50 && (won/ lost) < 1) {
             return 1;
-        } else {
+        }
+        else if (round > 100 && ((won * 100) / (lost * 100)) < 2) {
+            return 1;
+        }
+        else {
             return 0;
         }
+        }
+        else if (strategyChoice == 1 ){
+            if (shotsThisRound>10) return 3;
+            return (int)(Math.random()*2);
+        }
+        else if (strategyChoice==2) return 2;
+        else return 0;
+    }
+    
+    private void evaluate(){
+        int sum=0;
+        for (int i : lastFifty) {
+            sum+=i;
+        }
+        charlieSheening=(sum>25);
+        if (!charlieSheening) changeStrat();
+        System.out.println("Size of Last Fifty "+lastFifty.size());
+    }
+    private void changeStrat(){
+        lastFifty.clear();
+        strategyChoice++;
+        if (strategyChoice>=3) strategyChoice=0; 
+        System.out.println("Changed strat "+strategyChoice);
     }
 
 }

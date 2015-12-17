@@ -28,7 +28,6 @@ public class NextShooter {
     private int boardX;
     private int boardY;
     private ArrayList<Ship> enemyRemaining = new ArrayList();
-    //private int[][] shipMap = new int [10][10];
     private boolean testing = false;
     private int[][][] maps;
     final int SHOT = 0;
@@ -42,10 +41,10 @@ public class NextShooter {
     final int OURBOARDTHISROUND = 8;
     private int turnCount;
 
-    final double COOLDOWN = 0.8;
-    final double HEATUP = 5;
-    final int TOLERANCE = 7;
-    final int MAXHEAT = 25;
+    final double COOLDOWN = 0.9;
+    final double HEATUP = 50;
+    final int TOLERANCE = 200;
+    final int MAXHEAT = 500;
 
     public void setBoardX(int boardX) {
         this.boardX = boardX;
@@ -53,9 +52,9 @@ public class NextShooter {
     }
 
     public void startMaps() {
-        System.out.println("Starting maps with x: " + boardX + " and y: " + boardY);
+        
         maps = new int[boardX][boardY][9];
-        System.out.println("Map started");
+        
     }
 
     public void setEnemyRemaining(ArrayList<Ship> enemyRemaining) {
@@ -77,9 +76,9 @@ public class NextShooter {
         for (int i = boardY - 1; i >= 0; i--) {              //Write from top -> 9
             for (int j = 0; j < boardX; j++) {          //Write from x=0;
                 if (maps[j][i][map] < 10) {
-                    System.out.print("00" + maps[j][i][map] + " ");
+                    System.out.print("--" + maps[j][i][map] + " ");
                 } else if (maps[j][i][map] < 100) {
-                    System.out.print("0" + maps[j][i][map] + " ");
+                    System.out.print("-" + maps[j][i][map] + " ");
                 } else {
                     System.out.print(maps[j][i][map] + " ");
                 }
@@ -296,9 +295,36 @@ public class NextShooter {
         if (gridCase == 1) {
             return shootInGridHeatBased();
         }
+        
+        if (gridCase == 2) return shootInGridCoolBased();
+        
+        if (gridCase == 3) return shootInGridPureProbability();
         //if (gridCase==2) return shootSamePosition();
         return shootInGridHeatBased();
     }
+    public Position shootInGridPureProbability(){
+        
+        doComboMap();
+        Position shot=gridPositions.get(0);
+        //System.out.println("Got default shot");
+        if (testing){
+        printOutMap(SHIPCOMBOS);
+        }
+        ArrayList<Position> candidates = new ArrayList();
+        //shot = gridPositions.get((int)(Math.random()*gridPositions.size()));
+        for (Position p : gridPositions) {
+            if (maps[shot.x][shot.y][SHIPCOMBOS]<maps[p.x][p.y][SHIPCOMBOS]) shot=p;
+        }
+        int highestValue = maps[shot.x][shot.y][SHIPCOMBOS];
+        for (Position p : gridPositions) {
+            if (maps[p.x][p.y][SHIPCOMBOS]==highestValue) candidates.add(p);
+        }
+        shot= candidates.get((int)(Math.random()*candidates.size()));
+        gridPositions.remove(shot);
+        shotsFired.add(shot);
+        return shot;
+    }
+    
     public Position shootInGridNormal(){
         
         doComboMap();
@@ -319,32 +345,56 @@ public class NextShooter {
         for (Position p : gridPositions) {
             if (maps[p.x][p.y][THEIRPLACEMENTS]>35) {
                 shot=p;
-                //System.out.println("Shot changed "+shot.x + " "+shot.y);
-                    
             }
-            //System.out.println("shot determined by previous placement");
-            
-            
         }
-        
         gridPositions.remove(shot);
-        
-                shotsFired.add(shot);
+        shotsFired.add(shot);
         return shot;
     }
 
     public Position shootInGridHeatBased() {
 
         doComboMap();
+        // Assign shot to random position in the grid to prevent a null case
+        Position shot = gridPositions.get((int)(Math.random()*gridPositions.size()));
+        
+        // Assign shot to the gridposition with the most posible ship combinations
+        for (Position p : gridPositions) {
+            if (maps[shot.x][shot.y][SHIPCOMBOS] < maps[p.x][p.y][SHIPCOMBOS]) {
+                shot = p;
+            }
+        }
+        
+        // If another spot with the same amount of combinations exist where oponent places ships more often use instead.
+       
+        int highestValue = maps[shot.x][shot.y][SHIPCOMBOS];
+        for (Position p : gridPositions) {
+            if (maps[p.x][p.y][SHIPCOMBOS] == highestValue 
+                    && maps[shot.x][shot.y][THEIRPLACEMENTS] < maps[p.x][p.y][THEIRPLACEMENTS]) {
+                shot = p;
+            }
+        }
+        // The part that is meant to decide where to shoot. Choosing most common shipplacement with a treshhold condition.
+        for (Position p : gridPositions) {
+            if (maps[p.x][p.y][THEIRPLACEMENTS] > TOLERANCE) {
+                shot = p;
+            }
+        }
+        gridPositions.remove(shot);
+        shotsFired.add(shot);
+        return shot;
+    }
+    
+    // The hail Mary attempt. Shoot where the opponent doesn't seem to place his ships!
+    public Position shootInGridCoolBased() {
+        doComboMap();
         Position shot = gridPositions.get((int)(Math.random()*gridPositions.size()));
         for (Position p : gridPositions) {
             if (maps[p.x][p.y][THEIRPLACEMENTS]>maps[shot.x][shot.y][THEIRPLACEMENTS]) shot=p;
         }
-        //System.out.println("Got default shot");
         if (testing) {
             printOutMap(SHIPCOMBOS);
         }
-        //shot = gridPositions.get((int)(Math.random()*gridPositions.size()));
         for (Position p : gridPositions) {
             if (maps[shot.x][shot.y][SHIPCOMBOS] < maps[p.x][p.y][SHIPCOMBOS]) {
                 //shot = p;
@@ -353,18 +403,10 @@ public class NextShooter {
         int highestValue = maps[shot.x][shot.y][SHIPCOMBOS];
         for (Position p : gridPositions) {
             if (maps[p.x][p.y][SHIPCOMBOS] == highestValue 
-                    && maps[shot.x][shot.y][THEIRPLACEMENTS] < maps[p.x][p.y][THEIRPLACEMENTS]) {
+                    && maps[shot.x][shot.y][THEIRPLACEMENTS] > maps[p.x][p.y][THEIRPLACEMENTS]) {
                 shot = p;
             }
-        }
-        for (Position p : gridPositions) {
-            if (maps[p.x][p.y][THEIRPLACEMENTS] > TOLERANCE) {
-                shot = p;
-                //System.out.println("Shot changed "+shot.x + " "+shot.y);
-
-            }
-            //System.out.println("shot determined by previous placement");
-
+        
         }
 
         gridPositions.remove(shot);
@@ -373,29 +415,7 @@ public class NextShooter {
         return shot;
     }
 
-    public Position shootInGridLostFour() {
-        //System.out.println("Shoot in grid lost four");
-
-        doComboMap();
-        Position shot = gridPositions.get(0);
-        //System.out.println("Got default shot");
-        if (testing) {
-            printOutMap(SHIPCOMBOS);
-        }
-        //shot = gridPositions.get((int)(Math.random()*gridPositions.size()));
-        for (Position p : gridPositions) {
-            if (maps[shot.x][shot.y][SHIPCOMBOS] + Math.min((maps[shot.x][shot.y][6] / 5), 5)
-                    < maps[p.x][p.y][SHIPCOMBOS] + Math.min((maps[p.x][p.y][6] / 5), 5)) {
-                shot = p;
-            }
-        }
-
-        gridPositions.remove(shot);
-
-        shotsFired.add(shot);
-        return shot;
-    }
-
+    
     public boolean checkIdentShips() {
         for (int y = boardY - 1; y >= 0; y--) {
             for (int x = 0; x < boardX; x++) {
@@ -411,32 +431,36 @@ public class NextShooter {
         huntLocations.clear();
     }
 
+    
+    
     public Position huntOtherWay() {
         Position prospect = null;
+        ArrayList<Position> candidates = new ArrayList();
 
         for (int y = boardY - 1; y >= 0; y--) {
             for (int x = 0; x < boardX; x++) {
                 if (maps[x][y][1] == 1 && x + 1 < boardX && x - 1 >= 0 && (maps[x + 1][y][1] == 1) && (maps[x - 1][y][1] == 0)) {
                     prospect = (new Position(x - 1, y));
-                    break;  // Probably should be subbed with method to evaluate candidates
+                    candidates.add(prospect);
                 }
                 if (maps[x][y][1] == 1 && x + 1 < boardX && x - 1 >= 0 && (maps[x - 1][y][1] == 1) && (maps[x + 1][y][1] == 0)) {
                     prospect = (new Position(x + 1, y));
-                    break;  // Probably should be subbed with method to evaluate candidates
+                    candidates.add(prospect);
                 }
                 if (maps[x][y][1] == 1 && y + 1 < boardY && y - 1 >= 0 && (maps[x][y + 1][1] == 1) && (maps[x][y - 1][1] == 0)) {
                     prospect = (new Position(x, y - 1));
-                    break;  // Probably should be subbed with method to evaluate candidates
+                    candidates.add(prospect);
                 }
                 if (maps[x][y][1] == 1 && y + 1 < boardY && y - 1 >= 0 && (maps[x][y - 1][1] == 1) && (maps[x][y + 1][1] == 0)) {
                     prospect = (new Position(x, y + 1));
-                    break;  // Probably should be subbed with method to evaluate candidates
+                    candidates.add(prospect);
                 }
             }
         }
-        if (testing && prospect == null) {
-            System.out.println("Didn't find two connected hits, calling method consulting map");
+        for (Position p : candidates) {
+            if (gridPositions.contains(p))prospect=p;
         }
+        
         if (gridPositions.contains(prospect)) {
             gridPositions.remove(prospect);
         }
@@ -471,16 +495,20 @@ public class NextShooter {
         if (testing) {
             System.out.println("Huntlocations " + huntLocations.size());
         }
-
         Position shot = null;
+        for (Position p : huntLocations) {
+            if(gridPositions.contains(p))shot=p;
+        }
+
+        
         boolean bingo = false;
         for (Position p : huntLocations) {
-            if (maps[p.x][p.y][6] > 90) {
+            if (maps[p.x][p.y][6] > TOLERANCE) {
                 shot = p;
                 bingo = true;
             }
         }
-        if (!bingo) {
+        if (!bingo && shot==null) {
             shot = huntLocations.remove((int) (Math.random() * huntLocations.size()));
         }
         shotsFired.add(shot);
